@@ -8,6 +8,18 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    # CI has no committed .env — export Sauce Demo public credentials (same as https://www.saucedemo.com/)
+    # so globalSetup + tests/login.spec.ts receive process.env.* .
+    env:
+      SAUCE_USERNAME: standard_user
+      SAUCE_PASSWORD: secret_sauce
+      FAKE_USERNAME: fake_user
+      FAKE_PASSWORD: fake_password
+      LOCKED_OUT_USER: locked_out_user
+      PROBLEM_USER: problem_user
+      PERFORMANCE_GLITCH_USER: performance_glitch_user
+      ERROR_USER: error_user
+      VISUAL_USER: visual_user
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4

@@ -14,10 +14,17 @@ export default async function globalSetup(config: FullConfig) {
   const baseURL = config.projects[0]?.use?.baseURL as string | undefined;
   if (!baseURL) throw new Error('baseURL is required in playwright config');
 
-  const username = process.env.SAUCE_USERNAME;
-  const password = process.env.SAUCE_PASSWORD;
+  // Local: use .env via dotenv.config() above. CI has no .env — use env vars or Sauce Demo public demo creds (same as on https://www.saucedemo.com/).
+  const username =
+    process.env.SAUCE_USERNAME?.trim() ||
+    (process.env.CI === 'true' ? 'standard_user' : '');
+  const password =
+    process.env.SAUCE_PASSWORD?.trim() ||
+    (process.env.CI === 'true' ? 'secret_sauce' : '');
   if (!username || !password) {
-    throw new Error('Missing SAUCE_USERNAME or SAUCE_PASSWORD in .env');
+    throw new Error(
+      'Missing SAUCE_USERNAME or SAUCE_PASSWORD. Add them to .env locally, or set repository secrets / workflow env for CI.',
+    );
   }
 
   const authFile = path.resolve(__dirname, 'playwright/.auth/user.json');

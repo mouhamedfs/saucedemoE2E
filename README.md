@@ -48,6 +48,12 @@ VISUAL_USER=visual_user
 - **`globalSetup.ts`** utilise **`SAUCE_USERNAME`** / **`SAUCE_PASSWORD`** pour générer `playwright/.auth/user.json`.
 - **`tests/login.spec.ts`** lit toutes ces variables selon les scénarios.
 
+### CI (GitHub Actions)
+
+Le workflow **`.github/workflows/playwright.yml`** ne peut pas lire un `.env` versionné. Les variables listées ci‑dessus y sont donc définies dans **`jobs.test.env`** avec les identifiants **publics** affichés sur [saucedemo.com](https://www.saucedemo.com/) (comportement attendu pour une démo).
+
+En local, continue d’utiliser ton fichier **`.env`**.
+
 ## Scripts npm
 
 | Script | Commande |
@@ -134,5 +140,4 @@ Pour « suivre » le projet dans Notion : garde une **tâche ou une page projet*
 
 ## TODO / pistes
 
-- CI (GitHub Actions) : `npm ci`, `npx playwright install --with-deps`, `npm test`
 - Éventuel projet Playwright dédié « sans auth » si tu multiplies les specs login
