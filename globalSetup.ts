@@ -4,9 +4,29 @@ import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
 import { LoginPage } from './pom/LoginPage';
+import {
+  newClientCredentials,
+  registerSimpleBooksClient,
+  setDotEnvVar,
+} from './utils/simpleBooksAuth';
 
 export default async function globalSetup(config: FullConfig) {
   dotenv.config();
+
+  const envFile = path.resolve(__dirname, '.env');
+  try {
+    const { accessToken } = await registerSimpleBooksClient(newClientCredentials());
+    setDotEnvVar(envFile, 'API_TOKEN', accessToken);
+    process.env.API_TOKEN = accessToken;
+  } catch (err) {
+    if (!process.env.API_TOKEN?.trim()) {
+      throw err;
+    }
+    console.warn(
+      'Simple Books API client registration failed; continuing with existing API_TOKEN.',
+      err,
+    );
+  }
 
   // Ensure getByTestId() (if used) targets "data-test" everywhere.
   selectors.setTestIdAttribute('data-test');
