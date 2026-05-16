@@ -1,0 +1,75 @@
+# Publishes the Allure HTML report to GitHub Pages after "Playwright Tests" succeeds.
+# Repo Settings → Pages → Build and deployment → Source must be "GitHub Actions"
+# (not "Deploy from a branch", which serves README.md via Jekyll).
+name: Deploy Allure to GitHub Pages
+
+on:
+  workflow_run:
+    workflows: [Playwright Tests]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push'
+      )
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download Allure results from Playwright workflow
+        if: github.event_name == 'workflow_run'
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate Allure report
+        run: npx allure generate allure-results -o allure-report --clean
+
+      - name: Prepare static site for GitHub Pages
+        run: |
+          if [ ! -f allure-report/index.html ]; then
+            echo "::error::allure-report/index.html is missing — Allure report was not generated."
+            exit 1
+          fi
+          touch allure-report/.nojekyll
+          echo "Allure report ready ($(find allure-report -type f | wc -l) files)"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Allure report
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: allure-report
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
